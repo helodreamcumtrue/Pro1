@@ -1,6 +1,7 @@
 {
-  "name": "crisisboard-server",
+  "name": "crisisboard-backend",
   "version": "1.0.0",
+  "description": "Risk Intelligence Core for CrisisBoard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
