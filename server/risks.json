@@ -1,14 +1,26 @@
 [
   {
-    "id": "RT01",
+    "id": 1,
+    "type": "REGULATORY",
+    "title": "AI Act Compliance Delta",
+    "industry": "Tech",
+    "location": "EU",
+    "description": "Immediate infrastructure audit required for LLM weights storage.",
+    "rawImpact": 9,
+    "rawProbability": 8,
+    "rawVelocity": 9,
+    "timestamp": "2025-10-20T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "type": "LOGISTICS",
+    "title": "Suez Transit Bottleneck",
     "industry": "Retail",
-    "type": "Brand",
-    "title": "Deepfake Executive Impersonation",
-    "impact": 4,
-    "probability": 3,
-    "velocity": 5,
-    "description": "AI-generated deepfakes of leadership making offensive statements cause instant stock price and brand erosion.",
-    "timestamp": "2026-01-28"
+    "location": "Global",
+    "description": "Rerouting adding 14 days to lead times for Q4 stock.",
+    "rawImpact": 7,
+    "rawProbability": 9,
+    "rawVelocity": 4,
+    "timestamp": "2025-10-20T11:00:00Z"
   }
 ]
-
