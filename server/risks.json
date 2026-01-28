@@ -1,1 +1,14 @@
+[
+  {
+    "id": "RT01",
+    "industry": "Retail",
+    "type": "Brand",
+    "title": "Deepfake Executive Impersonation",
+    "impact": 4,
+    "probability": 3,
+    "velocity": 5,
+    "description": "AI-generated deepfakes of leadership making offensive statements cause instant stock price and brand erosion.",
+    "timestamp": "2026-01-28"
+  }
+]
 
