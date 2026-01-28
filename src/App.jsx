@@ -8,6 +8,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const API_BASE = 'http://localhost:4000/api';
 
+/**
+ * CRISISBOARD: INDUSTRY-LEVEL INTELLIGENCE
+ * Consolidated Single-File Architecture
+ */
+
 // --- Shared UI Components ---
 
 const GlassCard = ({ children, className = "", highlight = false }) => (
@@ -20,7 +25,7 @@ const GlassCard = ({ children, className = "", highlight = false }) => (
 );
 
 const SectionHeader = ({ title, subtitle, count }) => (
-  <div className="mb-10 animate-in fade-in duration-700">
+  <div className="mb-10 animate-in">
     <div className="flex items-center space-x-4 mb-2">
       <h2 className="text-4xl font-extralight tracking-tighter text-white">{title}</h2>
       {count !== undefined && (
@@ -39,7 +44,7 @@ const DashboardView = ({ risks, liveSignals }) => {
   const criticalCount = risks.filter(r => r.status === 'CRITICAL').length;
   
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-1000">
+    <div className="space-y-6 animate-in">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard className="flex flex-col justify-between min-h-[160px]">
           <div>
@@ -125,7 +130,7 @@ const DashboardView = ({ risks, liveSignals }) => {
 
 const ActionCenterView = ({ actions, onAddAction }) => {
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 animate-in">
       <SectionHeader title="Action Registry" subtitle="Mitigation lifecycle management" count={actions.length} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {actions.map(action => (
@@ -171,7 +176,6 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [isRiskPanelOpen, setIsRiskPanelOpen] = useState(false);
 
-  // Core Data Fetcher
   const syncIntelligence = useCallback(async () => {
     try {
       const [risksRes, signalsRes, actionsRes] = await Promise.all([
@@ -183,34 +187,35 @@ export default function App() {
       if (signalsRes.ok) setLiveSignals(await signalsRes.json());
       if (actionsRes.ok) setActions(await actionsRes.json());
       setIsConnected(true);
-    } catch (e) { setIsConnected(false); }
+    } catch (e) { 
+      setIsConnected(false); 
+      // Fallback logic for demo purposes if backend isn't live
+      setRisks([
+        { id: 1, title: 'Compliance Gap', type: 'REGULATORY', status: 'CRITICAL', impact: 80, score: 75, trend: [20, 40, 60, 80], description: 'Audit required immediately.' },
+        { id: 2, title: 'FX Volatility', type: 'FISCAL', status: 'WARNING', impact: 40, score: 45, trend: [10, 20, 35, 40], description: 'INR/USD corridor flux.' }
+      ]);
+      setLiveSignals([
+        { id: 1, text: "Market flux detected in APAC region", urgency: "Med", type: "MKT" }
+      ]);
+    }
   }, []);
 
   useEffect(() => {
     syncIntelligence();
-    const interval = setInterval(syncIntelligence, 10000); // Pulse every 10s
+    const interval = setInterval(syncIntelligence, 10000);
     return () => clearInterval(interval);
   }, [syncIntelligence]);
-
-  const handleAddRisk = async (data) => {
-    await fetch(`${API_BASE}/risks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    setIsRiskPanelOpen(false);
-    syncIntelligence();
-  };
 
   return (
     <div className="bg-[#000000] min-h-screen text-zinc-100 pb-32">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #000; }
+        body { font-family: 'Inter', sans-serif; background: #000; margin: 0; }
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
         .animate-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 2px; }
       `}</style>
 
       {/* Cinematic HUD Nav */}
@@ -250,7 +255,6 @@ export default function App() {
       </nav>
 
       <main className="max-w-[1400px] mx-auto pt-40 px-12">
-        {/* Branding Header */}
         <div className="flex justify-between items-start mb-24">
           <div>
             <h1 className="text-[140px] font-thin tracking-tighter leading-[0.7] text-white select-none">
@@ -259,10 +263,10 @@ export default function App() {
             <div className="mt-10 flex items-center space-x-8">
               <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.5em] flex items-center">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-3 animate-pulse"></span>
-                Strategic Node: Alpha-7
+                Node: Alpha-7
               </p>
               <p className="text-zinc-700 font-mono text-[10px] uppercase tracking-[0.5em]">
-                Uptime: {isConnected ? '99.9%' : 'OFFLINE'}
+                Status: {isConnected ? 'Synchronized' : 'Standalone Mode'}
               </p>
             </div>
           </div>
@@ -295,7 +299,7 @@ export default function App() {
                     </div>
                  </GlassCard>
                ))}
-               <div onClick={() => setIsRiskPanelOpen(true)} className="border border-dashed border-white/10 rounded-[24px] flex flex-col items-center justify-center p-12 group cursor-pointer hover:border-blue-500/30 transition-all">
+               <div className="border border-dashed border-white/10 rounded-[24px] flex flex-col items-center justify-center p-12 group cursor-pointer hover:border-blue-500/30 transition-all">
                   <Plus size={24} className="text-zinc-700 group-hover:text-white mb-3" />
                   <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Register Signal</p>
                </div>
@@ -309,32 +313,15 @@ export default function App() {
                 <div className="flex justify-between items-start border-b-[6px] border-black pb-12 mb-12">
                    <h1 className="text-7xl font-black tracking-tighter italic leading-[0.8] uppercase">CRISIS<br/>BOARD</h1>
                    <div className="text-right">
-                      <p className="font-bold text-[10px] tracking-[0.4em] uppercase text-zinc-400 mb-2">Alpha-9 Intelligence Protocol</p>
+                      <p className="font-bold text-[10px] tracking-[0.4em] uppercase text-zinc-400 mb-2">Alpha-9 Intel Protocol</p>
                       <button className="flex items-center space-x-2 border-2 border-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
                         <Download size={14} /> <span>PDF EXPORT</span>
                       </button>
                    </div>
                 </div>
                 <p className="text-4xl font-extralight tracking-tighter leading-tight mb-16">
-                  Structural risk divergence detected in <span className="font-bold underline">Tier-1 logistics corridors</span>. Current aggregated exposure identifies <span className="font-bold underline">₹{(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L</span> in monthly baseline erosion.
+                  Structural risk detected in <span className="font-bold underline">Market corridors</span>. Exposure identified at <span className="font-bold underline">₹{(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L</span>.
                 </p>
-                <div className="grid grid-cols-2 gap-16 pt-16 border-t border-black/10">
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase mb-6 tracking-[0.3em] text-zinc-400">Exposure Profile</h3>
-                      <div className="space-y-4">
-                         {risks.slice(0, 3).map(r => (
-                           <div key={r.id} className="flex justify-between border-b border-black/5 pb-2">
-                             <span className="text-xs font-bold uppercase">{r.title}</span>
-                             <span className="text-sm font-light">{r.score}</span>
-                           </div>
-                         ))}
-                      </div>
-                   </div>
-                   <div className="bg-zinc-50 p-8">
-                      <h3 className="text-[10px] font-black uppercase mb-3 tracking-[0.3em] text-zinc-400">Executive Rec</h3>
-                      <p className="text-sm font-medium leading-relaxed italic">"Infrastructure audit and capital reallocation is required for EU-sovereign nodes immediately to preserve 12.4% of projected Q4 margin."</p>
-                   </div>
-                </div>
              </div>
           </div>
         )}
