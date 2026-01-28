@@ -23,32 +23,16 @@ import {
   Target,
   Maximize2,
   MoreHorizontal,
-  Activity
+  Activity,
+  X
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-/**
- * CRISISBOARD: PURE STEALTH EDITION
- * Unified Build: Fixes duplicate exports and naming conflicts.
- * Integrated Single-File React Component.
- */
+const API_BASE = 'http://localhost:4000/api';
 
-// --- Mock Data ---
-const INITIAL_RISKS = [
-  { id: 1, type: 'REGULATORY', title: 'AI Act Compliance Delta', industry: 'Tech', location: 'EU', impact: 88, probability: 72, velocity: 94, status: 'CRITICAL', description: 'Immediate infrastructure audit required for LLM weights storage.', trend: [40, 50, 65, 88] },
-  { id: 2, type: 'LOGISTICS', title: 'Suez Transit Bottleneck', industry: 'Retail', location: 'Global', impact: 62, probability: 81, velocity: 35, status: 'WARNING', description: 'Rerouting adding 14 days to lead times for Q4 stock.', trend: [30, 45, 42, 62] },
-  { id: 3, type: 'FISCAL', title: 'INR/USD Volatility Spike', industry: 'Fintech', location: 'India', impact: 44, probability: 58, velocity: 78, status: 'ELEVATED', description: 'Hedging costs increasing; impact on offshore vendor payments.', trend: [20, 25, 38, 44] },
-];
-
-const COMPANY_PROFILE = {
-  monthlyRevenue: 1500000,
-  monthlyCosts: 1100000,
-  margin: 26.6,
-};
-
-// --- UI Components ---
+// --- Shared UI Components ---
 
 const GlassCard = ({ children, className = "" }) => (
   <div className={`bg-[#080808] border border-white/[0.08] hover:border-white/[0.15] transition-all duration-500 rounded-[20px] p-6 group relative overflow-hidden ${className}`}>
@@ -73,11 +57,13 @@ const BentoStat = ({ label, value, trend, subtext }) => (
   </GlassCard>
 );
 
+// --- Content Modules ---
+
 const DashboardView = ({ risks }) => (
   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <BentoStat label="Revenue Exposure" value="₹2.4M" trend={14.2} subtext="Direct threat to margin" />
-      <BentoStat label="Risk Index" value="74" trend={2.1} subtext="Global aggregate score" />
+      <BentoStat label="Revenue Exposure" value={`₹${(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L`} trend={14.2} subtext="Direct threat to margin" />
+      <BentoStat label="Risk Index" value={risks.length > 0 ? Math.round(risks.reduce((acc, r) => acc + r.score, 0) / risks.length) : 0} trend={2.1} subtext="Global aggregate score" />
       <BentoStat label="Active Signals" value={risks.length} trend={-4} subtext="Unprocessed data points" />
       <BentoStat label="Recovery ETA" value="14d" trend={0} subtext="Mitigation window" />
     </div>
@@ -120,12 +106,12 @@ const DashboardView = ({ risks }) => (
             <div key={r.id} className="group cursor-pointer">
               <div className="flex justify-between text-[10px] mb-2 font-black tracking-[0.2em] text-zinc-500 uppercase">
                 <span>{r.type}</span>
-                <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.impact}%</span>
+                <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.score}%</span>
               </div>
               <div className="h-[1px] w-full bg-white/[0.05] overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-1000 ease-out ${r.status === 'CRITICAL' ? 'bg-rose-500' : 'bg-blue-400'}`} 
-                  style={{ width: `${r.impact}%` }}
+                  style={{ width: `${r.score}%` }}
                 />
               </div>
               <p className="text-sm text-zinc-400 mt-4 font-light group-hover:text-white transition-colors tracking-tight">{r.title}</p>
@@ -137,7 +123,7 @@ const DashboardView = ({ risks }) => (
   </div>
 );
 
-const RiskExplorerView = ({ risks }) => (
+const RiskExplorerView = ({ risks, onAddClick }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
     {risks.map((risk) => (
       <GlassCard key={risk.id} className="flex flex-col hover:-translate-y-1">
@@ -158,68 +144,111 @@ const RiskExplorerView = ({ risks }) => (
             <p className="text-[11px] text-white uppercase tracking-wider">{risk.industry}</p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Velocity</p>
-            <p className="text-[11px] text-white uppercase tracking-wider">{risk.velocity ? `${risk.velocity} Mach` : 'N/A'}</p>
+            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Impact Value</p>
+            <p className="text-[11px] text-white uppercase tracking-wider">₹{(risk.financialImpact?.revenueLoss / 1000).toFixed(0)}k</p>
           </div>
         </div>
       </GlassCard>
     ))}
+    <div 
+      onClick={onAddClick}
+      className="border border-dashed border-white/[0.08] rounded-[20px] flex flex-col items-center justify-center p-8 group cursor-pointer hover:border-white/20 transition-all min-h-[250px]"
+    >
+      <div className="w-10 h-10 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 group-hover:bg-white/[0.08] transition-all">
+        <Plus className="text-zinc-500 group-hover:text-white" size={20} />
+      </div>
+      <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Register Threat</p>
+    </div>
   </div>
 );
 
-const SimulatorView = ({ risks }) => {
-  const [val, setVal] = useState(65);
+// --- Add Risk Slide-over ---
+
+const AddRiskPanel = ({ isOpen, onClose, onAdd }) => {
+  const [form, setForm] = useState({ title: '', type: 'REGULATORY', industry: '', location: '', description: '', impact: 5, probability: 5, velocity: 5 });
+
+  if (!isOpen) return null;
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-in zoom-in-95 duration-1000">
-      <GlassCard className="lg:col-span-3 min-h-[500px] flex flex-col justify-center">
-        <div className="absolute top-8 left-8">
-          <h4 className="text-2xl font-extralight text-white tracking-tighter italic">Probability Warp</h4>
-          <p className="text-xs text-zinc-500 tracking-tight">Simulating margin erosion against global volatility.</p>
+    <div className="fixed inset-0 z-[200] flex justify-end">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-[#050505] border-l border-white/10 p-8 h-full shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
+        <div className="flex justify-between items-center mb-12">
+          <h2 className="text-2xl font-extralight tracking-tighter text-white">Ingest Signal</h2>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X size={20} /></button>
         </div>
-        <div className="flex-1 flex flex-col justify-center px-12 pt-12">
-           <div className="relative mb-24">
+
+        <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Signal Title</label>
+            <input 
+              type="text" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
+              placeholder="Enter threat title..."
+              value={form.title}
+              onChange={e => setForm({...form, title: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Risk Category</label>
+              <select 
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none"
+                value={form.type}
+                onChange={e => setForm({...form, type: e.target.value})}
+              >
+                <option value="REGULATORY">REGULATORY</option>
+                <option value="LOGISTICS">LOGISTICS</option>
+                <option value="FISCAL">FISCAL</option>
+                <option value="REPUTATION">REPUTATION</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Industry</label>
               <input 
-                type="range" 
-                className="w-full h-[2px] bg-white/[0.08] rounded-full appearance-none cursor-pointer accent-blue-400"
-                value={val}
-                onChange={(e) => setVal(e.target.value)}
+                type="text" 
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"
+                placeholder="Sector..."
+                value={form.industry}
+                onChange={e => setForm({...form, industry: e.target.value})}
               />
-              <div className="absolute -top-14 left-1/2 -translate-x-1/2 text-7xl font-thin text-white/[0.03] select-none pointer-events-none">
-                {val}%
-              </div>
-           </div>
-           <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-4xl font-extralight text-white mb-2 tracking-tighter">₹{(1.5 * (val/100)).toFixed(1)}M</p>
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Revenue Exposure</p>
-              </div>
-              <div>
-                <p className="text-4xl font-extralight text-rose-500 mb-2 tracking-tighter">{(26.6 * (1 - val/200)).toFixed(1)}%</p>
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Projected Margin</p>
-              </div>
-              <div>
-                <p className="text-4xl font-extralight text-zinc-400 mb-2 tracking-tighter">{(val/12).toFixed(1)}x</p>
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">Risk Multiplier</p>
-              </div>
-           </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4">
+             <div className="flex justify-between items-center">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Impact Magnitude</label>
+                <span className="text-blue-400 font-mono text-xs">{form.impact}/10</span>
+             </div>
+             <input type="range" min="1" max="10" className="w-full accent-blue-500" value={form.impact} onChange={e => setForm({...form, impact: e.target.value})} />
+             
+             <div className="flex justify-between items-center">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Probability Index</label>
+                <span className="text-blue-400 font-mono text-xs">{form.probability}/10</span>
+             </div>
+             <input type="range" min="1" max="10" className="w-full accent-blue-500" value={form.probability} onChange={e => setForm({...form, probability: e.target.value})} />
+          </div>
+
+          <div className="space-y-2 pt-4">
+            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Briefing Context</label>
+            <textarea 
+              rows="4"
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none"
+              placeholder="Detailed intelligence report..."
+              value={form.description}
+              onChange={e => setForm({...form, description: e.target.value})}
+            />
+          </div>
         </div>
-      </GlassCard>
-      <GlassCard className="lg:col-span-2">
-         <h4 className="text-white font-medium mb-10 tracking-tight">AI Signal Intelligence</h4>
-         <div className="space-y-10">
-            {[
-              { label: 'Supply Chain Shock', desc: 'Cascading failure in micro-logistics nodes.', prob: 'HIGH' },
-              { label: 'Regulatory Drift', desc: 'Non-compliance window closing in 42 days.', prob: 'CRITICAL' },
-            ].map((item, i) => (
-              <div key={i} className="relative pl-6 border-l border-white/[0.05]">
-                <div className="absolute -left-1 top-0 w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.4)]" />
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-2">{item.prob} PROBABILITY</p>
-                <p className="text-lg font-light text-white mb-1 tracking-tight">{item.label}</p>
-                <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">{item.desc}</p>
-              </div>
-            ))}
-         </div>
-      </GlassCard>
+
+        <button 
+          onClick={() => onAdd(form)}
+          className="w-full mt-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl hover:bg-zinc-200 transition-all"
+        >
+          Initialize Standardization
+        </button>
+      </div>
     </div>
   );
 };
@@ -228,67 +257,57 @@ const SimulatorView = ({ risks }) => {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [risks, setRisks] = useState(INITIAL_RISKS);
+  const [risks, setRisks] = useState([]);
+  const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Optional: Integration for external API
+  const fetchRisks = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/risks`);
+      const data = await res.json();
+      setRisks(data);
+    } catch (err) {
+      console.error("Connectivity issue with Intelligence Core.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // We try to fetch from the API, but keep INITIAL_RISKS as a robust fallback
-    fetch("http://localhost:4000/api/risks")
-      .then(res => res.json())
-      .then(data => {
-        // Map external data schema (score/level) to internal dashboard schema (impact/status)
-        const mappedData = data.map(r => ({
-          ...r,
-          impact: r.score || r.impact,
-          status: r.level || r.status,
-          trend: r.trend || [30, 40, 50, 60]
-        }));
-        setRisks(mappedData);
-      })
-      .catch(() => {
-        // Fail silently and keep INITIAL_RISKS to prevent UI break
-      });
+    fetchRisks();
   }, []);
+
+  const handleAddRisk = async (formData) => {
+    try {
+      await fetch(`${API_BASE}/risks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      setIsAddPanelOpen(false);
+      fetchRisks(); // Reload
+    } catch (err) {
+      console.error("Failed to ingest signal.");
+    }
+  };
 
   return (
     <div className="bg-[#000000] min-h-screen text-zinc-100 selection:bg-blue-500/40 pb-24 overflow-x-hidden">
-      {/* Global Style Injections */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700;900&display=swap');
-        
-        body { 
-          font-family: 'Inter', sans-serif; 
-          background-color: #000;
-          margin: 0;
-          -webkit-font-smoothing: antialiased;
-        }
-        
-        input[type='range']::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          height: 12px; width: 12px;
-          border-radius: 50%;
-          background: #fff;
-          box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-          cursor: pointer;
-        }
-
-        .animate-in { animation: animateIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes animateIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #000; margin: 0; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #111; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #222; }
+        .animate-in { animation: animateIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes animateIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
       {/* HUD Navigation */}
       <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] w-fit">
         <div className="bg-black/90 backdrop-blur-3xl border border-white/[0.08] rounded-full px-6 py-2.5 flex items-center space-x-10 shadow-2xl shadow-black/50">
           <div className="flex items-center space-x-3 mr-4 pr-6 border-r border-white/[0.08]">
-            <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg shadow-white/20">
               <ShieldAlert size={14} className="text-black" />
             </div>
             <span className="text-xs font-black tracking-tighter uppercase italic text-white">CB</span>
@@ -309,13 +328,6 @@ export default function App() {
               {activeTab === tab.id && <div className="absolute -bottom-2 w-1 h-1 bg-white rounded-full" />}
             </button>
           ))}
-          
-          <div className="pl-6 border-l border-white/[0.08] flex items-center space-x-5">
-            <Bell size={16} className="text-zinc-600 hover:text-white cursor-pointer transition-colors" />
-            <div className="w-8 h-8 rounded-full bg-zinc-900 border border-white/[0.05] overflow-hidden flex items-center justify-center text-[10px] font-bold text-zinc-400">
-              JD
-            </div>
-          </div>
         </div>
       </nav>
 
@@ -328,54 +340,35 @@ export default function App() {
              </h1>
              <div className="mt-8 flex flex-wrap gap-6 items-center">
                <p className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.5em] flex items-center whitespace-nowrap">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-3 shadow-[0_0_10px_rgba(96,165,250,0.6)]"></span>
-                  Active Node: Alpha-7
+                  <span className={`w-1.5 h-1.5 rounded-full mr-3 shadow-[0_0_10px_rgba(96,165,250,0.6)] ${loading ? 'bg-amber-500' : 'bg-blue-400'}`}></span>
+                  Active Node: Alpha-7 {loading && " (Syncing...)"}
                </p>
-               <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-[0.5em] whitespace-nowrap">
+               <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-[0.5em] whitespace-nowrap hidden sm:block">
                   Lat: 28.6139° N / Long: 77.2090° E
                </p>
              </div>
           </div>
-          <div className="hidden lg:block text-right">
-            <p className="text-[9px] font-black text-zinc-700 uppercase tracking-[0.4em] mb-2">Global Sentiment Flux</p>
-            <p className="text-3xl font-thin text-rose-500 italic tracking-tighter">-12.42%</p>
-          </div>
         </div>
 
         {activeTab === 'dashboard' && <DashboardView risks={risks} />}
-        {activeTab === 'explorer' && <RiskExplorerView risks={risks} />}
-        {activeTab === 'simulator' && <SimulatorView risks={risks} />}
+        {activeTab === 'explorer' && <RiskExplorerView risks={risks} onAddClick={() => setIsAddPanelOpen(true)} />}
+        {activeTab === 'simulator' && <div className="animate-in"><TrendingDown className="text-zinc-800 mb-4" /> <p className="text-zinc-500 italic">Financial Warp Active - Adjust slider in Dashboard.</p></div>}
         {activeTab === 'consultant' && (
-          <div className="flex flex-col items-center">
-            <div className="w-full max-w-[800px] bg-white text-black p-12 md:p-20 shadow-2xl animate-in">
-              <div className="flex justify-between items-start border-b-[4px] border-black pb-8 mb-12">
-                <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-none">CRISIS<br/>BOARD</h1>
-                <div className="text-right">
-                  <p className="text-[10px] font-black tracking-[0.3em] uppercase">Intelligence Brief</p>
-                  <p className="text-xs font-medium">Ref: CB-ALPHA-9</p>
-                </div>
-              </div>
-              <p className="text-3xl font-extralight tracking-tight leading-snug mb-8">
-                Structural risk detected in <span className="font-bold underline">EU regulatory corridors</span>. Strategic capital realignment advised to preserve 24% of quarterly margins.
-              </p>
-              <div className="grid grid-cols-2 gap-12 pt-12 border-t border-black/10">
-                <div>
-                  <h3 className="text-[10px] font-black uppercase mb-4 tracking-[0.3em]">Exposure Matrix</h3>
-                  <div className="space-y-4 text-sm font-bold">
-                    <div className="flex justify-between border-b pb-2"><span>Audit Exposure</span><span>88%</span></div>
-                    <div className="flex justify-between border-b pb-2"><span>Route Latency</span><span>62%</span></div>
-                  </div>
-                </div>
-                <div className="bg-zinc-50 p-6 italic text-sm text-zinc-600">
-                  "Tier-1 logistics volatility is currently outpacing internal mitigation speeds. Immediate hedging suggested."
-                </div>
-              </div>
+          <div className="flex flex-col items-center animate-in">
+            <div className="w-full max-w-[800px] bg-white text-black p-12 md:p-20 shadow-2xl">
+              <h1 className="text-5xl font-black italic border-b-4 border-black pb-4 mb-8">BOARD BRIEF</h1>
+              <p className="text-2xl font-light leading-snug">Signal analysis complete. Total Exposure: ₹{(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L.</p>
             </div>
           </div>
         )}
       </main>
 
-      {/* Cinematic Grain Overlay */}
+      <AddRiskPanel 
+        isOpen={isAddPanelOpen} 
+        onClose={() => setIsAddPanelOpen(false)} 
+        onAdd={handleAddRisk} 
+      />
+
       <div className="fixed inset-0 pointer-events-none opacity-[0.035] contrast-150 grayscale mix-blend-overlay z-[200]" 
            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
       </div>
