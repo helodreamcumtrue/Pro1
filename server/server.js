@@ -1,7 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 const { 
   processRisk, 
   calculateFinancials, 
@@ -10,84 +8,113 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const RISKS_PATH = path.join(__dirname, 'risks.json');
 
 app.use(cors());
 app.use(express.json());
 
-// Helper to load company profile (can be moved to a DB later)
+// In-memory "Intelligence Registry" (Substitute with Firestore/PostgreSQL for production)
+let riskDatabase = [
+  { 
+    id: 1, 
+    type: 'REGULATORY', 
+    title: 'AI Act Compliance Delta', 
+    industry: 'Tech', 
+    location: 'EU', 
+    description: 'Immediate infrastructure audit required for LLM weights storage.',
+    rawImpact: 9, 
+    rawProbability: 8, 
+    rawVelocity: 9,
+    timestamp: new Date().toISOString()
+  },
+  { 
+    id: 2, 
+    type: 'LOGISTICS', 
+    title: 'Suez Transit Bottleneck', 
+    industry: 'Retail', 
+    location: 'Global', 
+    description: 'Rerouting adding 14 days to lead times for Q4 stock.',
+    rawImpact: 7, 
+    rawProbability: 9, 
+    rawVelocity: 4,
+    timestamp: new Date().toISOString()
+  }
+];
+
 let companyProfile = {
   monthlyRevenue: 1500000,
   monthlyCosts: 1100000,
   industry: 'Technology & Manufacturing',
-  sensitivity: 0.85 
+  sensitivity: 0.85 // 0 to 1 scale
 };
+
+// --- API Endpoints ---
 
 /**
  * GET /api/risks
- * Fetches signals from risks.json and runs them through the analytical engines.
+ * Returns all risks processed through the Risk, Financial, and Recommendation engines.
  */
 app.get('/api/risks', (req, res) => {
-  try {
-    const rawData = fs.readFileSync(RISKS_PATH, 'utf8');
-    const riskDatabase = JSON.parse(rawData);
+  const processedRisks = riskDatabase.map(risk => {
+    // 1. Calculate Score
+    const riskAnalysis = processRisk(risk);
+    
+    // 2. Calculate Financial Consequences
+    const financialImpact = calculateFinancials(riskAnalysis.impact, companyProfile);
+    
+    // 3. Generate Next Steps
+    const recommendations = generateRecommendations(riskAnalysis, risk.type);
 
-    const processedRisks = riskDatabase.map(risk => {
-      // 1. Calculate Risk Scores
-      const riskAnalysis = processRisk(risk);
-      
-      // 2. Calculate Financial Consequences
-      const financialImpact = calculateFinancials(riskAnalysis.impact, companyProfile);
-      
-      // 3. Generate Actions
-      const recommendations = generateRecommendations(riskAnalysis, risk.type);
+    return {
+      ...risk,
+      ...riskAnalysis,
+      financialImpact,
+      recommendations
+    };
+  });
 
-      return {
-        ...risk,
-        ...riskAnalysis,
-        financialImpact,
-        recommendations
-      };
-    });
-
-    res.json(processedRisks);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to read intelligence registry.' });
-  }
+  res.json(processedRisks);
 });
 
 /**
  * POST /api/risks
- * Ingests and standardizes a new risk signal.
+ * Ingests a new signal, standardizes it, and saves it to the registry.
  */
 app.post('/api/risks', (req, res) => {
-  try {
-    const rawData = fs.readFileSync(RISKS_PATH, 'utf8');
-    const db = JSON.parse(rawData);
+  const { title, type, industry, location, description, impact, probability, velocity } = req.body;
 
-    const newRisk = {
-      id: Date.now(),
-      title: req.body.title || 'Unnamed Signal',
-      type: req.body.type || 'GENERAL',
-      industry: req.body.industry || 'Global',
-      location: req.body.location || 'Remote',
-      description: req.body.description || '',
-      rawImpact: parseFloat(req.body.impact) || 5,
-      rawProbability: parseFloat(req.body.probability) || 5,
-      rawVelocity: parseFloat(req.body.velocity) || 5,
-      timestamp: new Date().toISOString()
-    };
+  const newRisk = {
+    id: riskDatabase.length + 1,
+    title: title || 'Unnamed Signal',
+    type: type || 'GENERAL',
+    industry: industry || 'Global',
+    location: location || 'Remote',
+    description: description || 'No description provided.',
+    rawImpact: parseFloat(impact) || 5,
+    rawProbability: parseFloat(probability) || 5,
+    rawVelocity: parseFloat(velocity) || 5,
+    timestamp: new Date().toISOString()
+  };
 
-    db.push(newRisk);
-    fs.writeFileSync(RISKS_PATH, JSON.stringify(db, null, 2));
-    
-    res.status(201).json({ message: 'Signal ingested.', id: newRisk.id });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to save signal.' });
-  }
+  riskDatabase.push(newRisk);
+  res.status(201).json({ message: 'Risk signal standardized and ingested.', id: newRisk.id });
 });
 
-app.get('/api/profile', (req, res) => res.json(companyProfile));
+/**
+ * GET /api/profile
+ * Returns the executive company profile.
+ */
+app.get('/api/profile', (req, res) => {
+  res.json(companyProfile);
+});
+
+/**
+ * PUT /api/profile
+ * Updates company profile details for simulation accuracy.
+ */
+app.put('/api/profile', (req, res) => {
+  companyProfile = { ...companyProfile, ...req.body };
+  res.json({ message: 'Executive profile updated.', profile: companyProfile });
+});
 
 app.listen(PORT, () => {
   console.log(`CrisisBoard Intelligence Core running on http://localhost:${PORT}`);
