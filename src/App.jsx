@@ -24,13 +24,45 @@ import {
   Maximize2,
   MoreHorizontal,
   Activity,
-  X
+  X,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 const API_BASE = 'http://localhost:4000/api';
+
+// --- Resilience Logic: Mock Data Fallback ---
+const INITIAL_MOCK_RISKS = [
+  { 
+    id: 'mock-1', 
+    type: 'REGULATORY', 
+    title: 'AI Act Compliance Delta (Demo)', 
+    industry: 'Tech', 
+    location: 'EU', 
+    impact: 9, 
+    score: 88, 
+    status: 'CRITICAL', 
+    description: 'Infrastructure audit required for compliance.', 
+    trend: [40, 50, 65, 88],
+    financialImpact: { revenueLoss: 240000, marginErosion: 2.1 }
+  },
+  { 
+    id: 'mock-2', 
+    type: 'LOGISTICS', 
+    title: 'Global Freight Volatility (Demo)', 
+    industry: 'Retail', 
+    location: 'Global', 
+    impact: 7, 
+    score: 62, 
+    status: 'WARNING', 
+    description: 'Rerouting adding 14 days to lead times.', 
+    trend: [30, 45, 42, 62],
+    financialImpact: { revenueLoss: 120000, marginErosion: 1.4 }
+  }
+];
 
 // --- Shared UI Components ---
 
@@ -49,8 +81,8 @@ const BentoStat = ({ label, value, trend, subtext }) => (
     </div>
     <div className="flex items-end justify-between mt-4">
       <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-tighter">{subtext}</p>
-      <div className={`flex items-center text-[11px] font-bold ${trend > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-        {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+      <div className={`flex items-center text-[11px] font-bold ${trend >= 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+        {trend >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
         {Math.abs(trend)}%
       </div>
     </div>
@@ -62,9 +94,19 @@ const BentoStat = ({ label, value, trend, subtext }) => (
 const DashboardView = ({ risks }) => (
   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <BentoStat label="Revenue Exposure" value={`₹${(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L`} trend={14.2} subtext="Direct threat to margin" />
-      <BentoStat label="Risk Index" value={risks.length > 0 ? Math.round(risks.reduce((acc, r) => acc + r.score, 0) / risks.length) : 0} trend={2.1} subtext="Global aggregate score" />
-      <BentoStat label="Active Signals" value={risks.length} trend={-4} subtext="Unprocessed data points" />
+      <BentoStat 
+        label="Revenue Exposure" 
+        value={`₹${(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L`} 
+        trend={14.2} 
+        subtext="Projected monthly hit" 
+      />
+      <BentoStat 
+        label="Risk Index" 
+        value={risks.length > 0 ? Math.round(risks.reduce((acc, r) => acc + (r.score || 0), 0) / risks.length) : 0} 
+        trend={2.1} 
+        subtext="Global aggregate score" 
+      />
+      <BentoStat label="Active Signals" value={risks.length} trend={-4} subtext="Aggregated feeds" />
       <BentoStat label="Recovery ETA" value="14d" trend={0} subtext="Mitigation window" />
     </div>
 
@@ -79,7 +121,7 @@ const DashboardView = ({ risks }) => (
         </div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={risks.length > 0 ? risks[0].trend.map((val, i) => ({ name: `T-${i}`, value: val })) : []}>
+            <AreaChart data={risks.length > 0 && risks[0].trend ? risks[0].trend.map((val, i) => ({ name: `T-${i}`, value: val })) : []}>
               <defs>
                 <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.2}/>
@@ -102,21 +144,23 @@ const DashboardView = ({ risks }) => (
       <GlassCard>
         <h4 className="text-white font-medium mb-8">Threat Distribution</h4>
         <div className="space-y-7">
-          {risks.map(r => (
+          {risks.length > 0 ? risks.map(r => (
             <div key={r.id} className="group cursor-pointer">
               <div className="flex justify-between text-[10px] mb-2 font-black tracking-[0.2em] text-zinc-500 uppercase">
                 <span>{r.type}</span>
-                <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.score}%</span>
+                <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.score || 0}%</span>
               </div>
               <div className="h-[1px] w-full bg-white/[0.05] overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-1000 ease-out ${r.status === 'CRITICAL' ? 'bg-rose-500' : 'bg-blue-400'}`} 
-                  style={{ width: `${r.score}%` }}
+                  style={{ width: `${r.score || 0}%` }}
                 />
               </div>
-              <p className="text-sm text-zinc-400 mt-4 font-light group-hover:text-white transition-colors tracking-tight">{r.title}</p>
+              <p className="text-sm text-zinc-400 mt-4 font-light group-hover:text-white transition-colors tracking-tight line-clamp-1">{r.title}</p>
             </div>
-          ))}
+          )) : (
+            <p className="text-xs text-zinc-600 italic">No active threats detected.</p>
+          )}
         </div>
       </GlassCard>
     </div>
@@ -144,7 +188,7 @@ const RiskExplorerView = ({ risks, onAddClick }) => (
             <p className="text-[11px] text-white uppercase tracking-wider">{risk.industry}</p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Impact Value</p>
+            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Exposure</p>
             <p className="text-[11px] text-white uppercase tracking-wider">₹{(risk.financialImpact?.revenueLoss / 1000).toFixed(0)}k</p>
           </div>
         </div>
@@ -221,13 +265,13 @@ const AddRiskPanel = ({ isOpen, onClose, onAdd }) => {
                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Impact Magnitude</label>
                 <span className="text-blue-400 font-mono text-xs">{form.impact}/10</span>
              </div>
-             <input type="range" min="1" max="10" className="w-full accent-blue-500" value={form.impact} onChange={e => setForm({...form, impact: e.target.value})} />
+             <input type="range" min="1" max="10" className="w-full h-1 bg-white/10 appearance-none rounded-full accent-blue-500" value={form.impact} onChange={e => setForm({...form, impact: e.target.value})} />
              
              <div className="flex justify-between items-center">
                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Probability Index</label>
                 <span className="text-blue-400 font-mono text-xs">{form.probability}/10</span>
              </div>
-             <input type="range" min="1" max="10" className="w-full accent-blue-500" value={form.probability} onChange={e => setForm({...form, probability: e.target.value})} />
+             <input type="range" min="1" max="10" className="w-full h-1 bg-white/10 appearance-none rounded-full accent-blue-500" value={form.probability} onChange={e => setForm({...form, probability: e.target.value})} />
           </div>
 
           <div className="space-y-2 pt-4">
@@ -244,7 +288,7 @@ const AddRiskPanel = ({ isOpen, onClose, onAdd }) => {
 
         <button 
           onClick={() => onAdd(form)}
-          className="w-full mt-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl hover:bg-zinc-200 transition-all"
+          className="w-full mt-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl hover:bg-zinc-200 transition-all active:scale-95"
         >
           Initialize Standardization
         </button>
@@ -260,14 +304,27 @@ export default function App() {
   const [risks, setRisks] = useState([]);
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
 
   const fetchRisks = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/risks`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+      const res = await fetch(`${API_BASE}/risks`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) throw new Error('Network response not ok');
+      
       const data = await res.json();
       setRisks(data);
+      setIsConnected(true);
     } catch (err) {
-      console.error("Connectivity issue with Intelligence Core.");
+      console.warn("Connectivity issue with Intelligence Core. Falling back to Mock Intelligence.");
+      // FALLBACK: If server is down, use mock data so the app stays functional for presentation
+      setRisks(INITIAL_MOCK_RISKS);
+      setIsConnected(false);
     } finally {
       setLoading(false);
     }
@@ -278,14 +335,31 @@ export default function App() {
   }, []);
 
   const handleAddRisk = async (formData) => {
+    if (!isConnected) {
+      // If offline, just add locally for demo purposes
+      const newRisk = {
+        ...formData,
+        id: Date.now(),
+        score: Math.round((formData.impact * formData.probability * 7) / 10),
+        status: formData.impact > 7 ? 'CRITICAL' : 'WARNING',
+        trend: [20, 30, 45, 60],
+        financialImpact: { revenueLoss: formData.impact * 20000, marginErosion: 0.5 }
+      };
+      setRisks([newRisk, ...risks]);
+      setIsAddPanelOpen(false);
+      return;
+    }
+
     try {
-      await fetch(`${API_BASE}/risks`, {
+      const res = await fetch(`${API_BASE}/risks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      setIsAddPanelOpen(false);
-      fetchRisks(); // Reload
+      if (res.ok) {
+        setIsAddPanelOpen(false);
+        fetchRisks(); // Reload
+      }
     } catch (err) {
       console.error("Failed to ingest signal.");
     }
@@ -301,6 +375,17 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #111; border-radius: 10px; }
         .animate-in { animation: animateIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes animateIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Range input styling */
+        input[type='range']::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 14px;
+          width: 14px;
+          border-radius: 50%;
+          background: #fff;
+          cursor: pointer;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
       `}</style>
 
       {/* HUD Navigation */}
@@ -340,24 +425,40 @@ export default function App() {
              </h1>
              <div className="mt-8 flex flex-wrap gap-6 items-center">
                <p className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.5em] flex items-center whitespace-nowrap">
-                  <span className={`w-1.5 h-1.5 rounded-full mr-3 shadow-[0_0_10px_rgba(96,165,250,0.6)] ${loading ? 'bg-amber-500' : 'bg-blue-400'}`}></span>
-                  Active Node: Alpha-7 {loading && " (Syncing...)"}
+                  <span className={`w-1.5 h-1.5 rounded-full mr-3 shadow-[0_0_10px_rgba(255,255,255,0.2)] ${loading ? 'bg-amber-500 animate-pulse' : isConnected ? 'bg-emerald-400' : 'bg-rose-500'}`}></span>
+                  Status: {loading ? 'Syncing Intelligence...' : isConnected ? 'Intelligence Core Live' : 'Demo Mode (Offline)'}
                </p>
                <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-[0.5em] whitespace-nowrap hidden sm:block">
-                  Lat: 28.6139° N / Long: 77.2090° E
+                  Node: Alpha-7 // Lat: 28.6139° N
                </p>
              </div>
           </div>
+          {!isConnected && !loading && (
+            <button 
+              onClick={fetchRisks}
+              className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-widest flex items-center border border-white/10 px-3 py-1.5 rounded-full transition-all"
+            >
+              <Wifi size={12} className="mr-2" /> Reconnect Core
+            </button>
+          )}
         </div>
 
         {activeTab === 'dashboard' && <DashboardView risks={risks} />}
         {activeTab === 'explorer' && <RiskExplorerView risks={risks} onAddClick={() => setIsAddPanelOpen(true)} />}
-        {activeTab === 'simulator' && <div className="animate-in"><TrendingDown className="text-zinc-800 mb-4" /> <p className="text-zinc-500 italic">Financial Warp Active - Adjust slider in Dashboard.</p></div>}
+        {activeTab === 'simulator' && <div className="animate-in flex flex-col items-center justify-center py-20"><TrendingDown size={48} className="text-zinc-800 mb-4" /> <p className="text-zinc-500 italic tracking-tight">Intelligence Warp Active - Simulation data routed via Dashboard stats.</p></div>}
         {activeTab === 'consultant' && (
           <div className="flex flex-col items-center animate-in">
             <div className="w-full max-w-[800px] bg-white text-black p-12 md:p-20 shadow-2xl">
-              <h1 className="text-5xl font-black italic border-b-4 border-black pb-4 mb-8">BOARD BRIEF</h1>
-              <p className="text-2xl font-light leading-snug">Signal analysis complete. Total Exposure: ₹{(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L.</p>
+              <div className="flex justify-between items-start mb-12 border-b-2 border-black pb-8">
+                <div>
+                  <h1 className="text-5xl font-black italic tracking-tighter leading-none mb-1">BOARD BRIEF</h1>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ref: Alpha-9 // Confidential</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-xs font-bold uppercase">{new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+              <p className="text-3xl font-extralight tracking-tight leading-snug">Signal analysis complete. Total Business Exposure identified at <span className="font-bold underline">₹{(risks.reduce((acc, r) => acc + (r.financialImpact?.revenueLoss || 0), 0) / 100000).toFixed(1)}L</span> across core sectors.</p>
             </div>
           </div>
         )}
