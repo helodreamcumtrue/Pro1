@@ -1,142 +1,91 @@
 /**
- * CRISISBOARD INTELLIGENCE ENGINES v2.0
- * High-performance analytical frameworks for Risk and Finance.
- * Optimized for executive decision-making and boardroom reporting.
+ * CRISISBOARD LOGIC ENGINES
+ * The mathematical frameworks for Risk Scoring, Financial Impact, and Recommendations.
  */
 
 /**
- * 1. ENHANCED RISK ENGINE
- * Uses a weighted geometric mean to calculate the "Crisis Index".
- * Prioritizes 'Velocity' as a multiplier for short-term operational stability.
+ * 1. RISK ENGINE
+ * Standardizes raw data and calculates the Risk Score.
+ * Formula: (Impact * Probability * Velocity) normalized to 100.
  */
-const processRisk = (risk) => {
-  const i = Math.min(Math.max(risk.rawImpact || 5, 1), 10);
-  const p = Math.min(Math.max(risk.rawProbability || 5, 1), 10);
-  const v = Math.min(Math.max(risk.rawVelocity || 5, 1), 10);
+function processRisk(risk) {
+  const impact = risk.rawImpact;      // 1-10
+  const probability = risk.rawProbability; // 1-10
+  const velocity = risk.rawVelocity;    // 1-10
 
-  // Velocity acts as a weight: High velocity risks escalate the score faster
-  const velocityWeight = 1 + (v / 20); 
-  const baseScore = (i * p * 1.5);
-  const score = Math.min(Math.round(baseScore * velocityWeight), 100);
+  // Geometric mean-based scoring for higher sensitivity to high-impact variables
+  const score = Math.round((impact * probability * velocity) / 10);
   
   let status = 'LOW';
-  let color = '#10b981'; // Emerald
-
-  if (score > 80) {
-    status = 'CRITICAL';
-    color = '#f43f5e'; // Rose
-  } else if (score > 60) {
-    status = 'HIGH';
-    color = '#f59e0b'; // Amber
-  } else if (score > 40) {
-    status = 'WARNING';
-    color = '#3b82f6'; // Blue
-  } else if (score > 20) {
-    status = 'ELEVATED';
-    color = '#6366f1'; // Indigo
-  }
+  if (score > 70) status = 'CRITICAL';
+  else if (score > 40) status = 'WARNING';
+  else if (score > 20) status = 'ELEVATED';
 
   return {
     score,
     status,
-    color,
-    impactLevel: i,
-    probabilityLevel: p,
-    velocityLevel: v,
-    impact: score // Normalized for financial engine
+    impact: score // Normalized impact for financial engine
   };
-};
+}
 
 /**
- * 2. ADVANCED FINANCIAL IMPACT ENGINE
- * Translates risk scores into granular P&L consequences.
- * Calculates Revenue Erosion, OpEx Surge, and EBITDA impact.
+ * 2. FINANCIAL IMPACT ENGINE
+ * Translates abstract risk into currency-based consequences.
  */
-const calculateFinancials = (riskScore, profile) => {
-  const { monthlyRevenue, monthlyCosts, sensitivity, industry } = profile;
+function calculateFinancials(riskScore, profile) {
+  const { monthlyRevenue, monthlyCosts, sensitivity } = profile;
   
-  // Industry-specific volatility multipliers
-  const sectorMultipliers = {
-    'Technology & Manufacturing': 1.2,
-    'Fintech': 1.4,
-    'Retail': 1.1,
-    'General': 1.0
-  };
-  const multiplier = sectorMultipliers[industry] || 1.0;
+  // Logic: High risk score + high sensitivity = higher revenue erosion
+  const factor = (riskScore / 100) * sensitivity;
   
-  // Normalize factor based on score and corporate sensitivity
-  const factor = (riskScore / 100) * sensitivity * multiplier;
+  const revenueLoss = Math.round(monthlyRevenue * 0.12 * factor);
+  const costIncrease = Math.round(monthlyCosts * 0.07 * factor);
   
-  // Revenue Impact (Demand loss / Contract cancellations)
-  const revenueLoss = Math.round(monthlyRevenue * 0.15 * factor);
-  
-  // OpEx Impact (Legal fees / Supply chain premiums / PR costs)
-  const costIncrease = Math.round(monthlyCosts * 0.09 * factor);
-  
-  // Margin Analytics
-  const currentEBITDA = monthlyRevenue - monthlyCosts;
-  const currentMargin = (currentEBITDA / monthlyRevenue) * 100;
-  
+  const currentMargin = ((monthlyRevenue - monthlyCosts) / monthlyRevenue) * 100;
   const projectedRevenue = monthlyRevenue - revenueLoss;
   const projectedCosts = monthlyCosts + costIncrease;
-  const projectedEBITDA = projectedRevenue - projectedCosts;
-  const projectedMargin = (projectedEBITDA / projectedRevenue) * 100;
+  const projectedMargin = ((projectedRevenue - projectedCosts) / projectedRevenue) * 100;
 
   return {
     revenueLoss,
     costIncrease,
-    ebitdaImpact: currentEBITDA - projectedEBITDA,
     marginErosion: (currentMargin - projectedMargin).toFixed(2),
     projectedMargin: projectedMargin.toFixed(2),
-    recoveryCostEstimate: Math.round(revenueLoss * 0.25), // Estimate of capital needed to revert impact
-    currency: profile.currency || 'INR'
+    currency: 'INR'
   };
-};
+}
 
 /**
- * 3. STRATEGIC RECOMMENDATION ENGINE
- * Dynamic rule-based logic to generate actionable boardroom protocols.
+ * 3. RECOMMENDATION ENGINE
+ * Rule-based next steps based on risk type and severity.
  */
-const generateRecommendations = (riskAnalysis, type) => {
+function generateRecommendations(riskAnalysis, type) {
   const { status, score } = riskAnalysis;
   const actions = [];
 
-  // Universal Severity Triggers
-  if (score > 85) {
-    actions.push({ task: 'Activate Crisis Management Team (CMT)', priority: 'CRITICAL', eta: '2h' });
-    actions.push({ task: 'Immediate Investor Relations (IR) Hold Statement', priority: 'CRITICAL', eta: '4h' });
-  } else if (score > 60) {
-    actions.push({ task: 'Executive Committee Briefing', priority: 'HIGH', eta: '24h' });
+  if (status === 'CRITICAL') {
+    actions.push({ task: 'Immediate Board Briefing', priority: 'P0' });
   }
 
-  // Type-Specific Protocols
   switch (type) {
     case 'REGULATORY':
-      actions.push({ task: 'Gap Analysis vs New Compliance Framework', priority: 'High', owner: 'Legal' });
-      actions.push({ task: 'Lobbying & Govt. Relations Outreach', priority: 'Medium', owner: 'Public Affairs' });
+      actions.push({ task: 'Legal Review of Compliance Delta', priority: 'High' });
+      if (score > 80) actions.push({ task: 'Budget allocation for infrastructure audit', priority: 'High' });
       break;
     case 'LOGISTICS':
-      actions.push({ task: 'Identify Tier-2 Alternate Suppliers', priority: 'High', owner: 'Ops' });
-      actions.push({ task: 'Inventory Buffer Optimization (Safety Stock)', priority: 'Medium', owner: 'Supply Chain' });
+      actions.push({ task: 'Inventory buffer analysis', priority: 'Medium' });
+      actions.push({ task: 'Diversify supply route nodes', priority: 'High' });
       break;
     case 'FISCAL':
-      actions.push({ task: 'Review Forward Exchange Contracts', priority: 'High', owner: 'Finance' });
-      actions.push({ task: 'Stress-test Cash Flow Liquidity', priority: 'High', owner: 'Treasury' });
-      break;
-    case 'REPUTATION':
-      actions.push({ task: 'Real-time Sentiment Analysis Monitoring', priority: 'Medium', owner: 'Marketing' });
-      actions.push({ task: 'Stakeholder Reassurance Campaign', priority: 'High', owner: 'PR' });
-      break;
-    case 'CYBER':
-      actions.push({ task: 'Penetration Testing & Perimeter Hardening', priority: 'Critical', owner: 'CISO' });
-      actions.push({ task: 'Backup Integrity Verification', priority: 'High', owner: 'IT' });
+      actions.push({ task: 'Execute Currency Hedging', priority: 'High' });
+      actions.push({ task: 'Vendor payment renegotiation', priority: 'Medium' });
       break;
     default:
-      actions.push({ task: 'Establish Baseline Monitoring KPIs', priority: 'Low', owner: 'Strategy' });
+      actions.push({ task: 'Standard risk monitoring', priority: 'Low' });
   }
 
   return actions;
-};
+}
 
 module.exports = {
   processRisk,
