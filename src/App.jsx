@@ -406,3 +406,36 @@ export default function App() {
     </div>
   );
 }
+import { useEffect, useState } from "react";
+
+export default function App() {
+  const [risks, setRisks] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:4000/api/risks")
+      .then(res => res.json())
+      .then(data => setRisks(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-black text-white p-6">
+      <h1 className="text-3xl font-bold mb-4">CrisisBoard</h1>
+
+      {risks.map(r => (
+        <div
+          key={r.id}
+          className="mb-3 p-3 rounded border border-zinc-800"
+        >
+          <div className="font-semibold">{r.title}</div>
+          <div className="text-sm text-zinc-400">
+            {r.industry} • {r.type}
+          </div>
+          <div className="mt-1">
+            Score: <span className="font-bold">{r.score}</span> ({r.level})
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
