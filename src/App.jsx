@@ -26,17 +26,14 @@ import {
   Activity
 } from 'lucide-react';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-// --- Theme Constants ---
-// Absolute Black Aesthetic
-const THEME = {
-  bg: 'bg-[#000000]',
-  card: 'bg-[#080808] border border-white/[0.08] hover:border-white/[0.15] transition-all duration-500',
-  accent: 'text-blue-400',
-  textSecondary: 'text-zinc-500 font-medium tracking-tight',
-};
+/**
+ * CRISISBOARD: PURE STEALTH EDITION
+ * Unified Build: Fixes duplicate exports and naming conflicts.
+ * Integrated Single-File React Component.
+ */
 
 // --- Mock Data ---
 const INITIAL_RISKS = [
@@ -54,7 +51,7 @@ const COMPANY_PROFILE = {
 // --- UI Components ---
 
 const GlassCard = ({ children, className = "" }) => (
-  <div className={`${THEME.card} rounded-[20px] p-6 group relative overflow-hidden ${className}`}>
+  <div className={`bg-[#080808] border border-white/[0.08] hover:border-white/[0.15] transition-all duration-500 rounded-[20px] p-6 group relative overflow-hidden ${className}`}>
     <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
     {children}
   </div>
@@ -76,75 +73,71 @@ const BentoStat = ({ label, value, trend, subtext }) => (
   </GlassCard>
 );
 
-// --- Pages ---
-
-const Dashboard = ({ risks }) => {
-  return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <BentoStat label="Revenue Exposure" value="₹2.4M" trend={14.2} subtext="Direct threat to margin" />
-        <BentoStat label="Risk Index" value="74" trend={2.1} subtext="Global aggregate score" />
-        <BentoStat label="Active Signals" value="12" trend={-4} subtext="Unprocessed data points" />
-        <BentoStat label="Recovery ETA" value="14d" trend={0} subtext="Mitigation window" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <GlassCard className="lg:col-span-2">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h4 className="text-white font-medium tracking-tight">Risk Propagation Velocity</h4>
-              <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-black">Time-series intelligence</p>
-            </div>
-            <Activity size={18} className="text-blue-400" />
-          </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={risks[0].trend.map((val, i) => ({ name: `T-${i}`, value: val }))}>
-                <defs>
-                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                <XAxis dataKey="name" hide />
-                <YAxis hide domain={[0, 100]} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff10', borderRadius: '12px' }}
-                  itemStyle={{ color: '#fff', fontSize: '12px' }}
-                />
-                <Area type="monotone" dataKey="value" stroke="#60a5fa" strokeWidth={1.5} fill="url(#grad)" animationDuration={2000} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </GlassCard>
-
-        <GlassCard>
-          <h4 className="text-white font-medium mb-8">Threat Distribution</h4>
-          <div className="space-y-7">
-            {risks.map(r => (
-              <div key={r.id} className="group cursor-pointer">
-                <div className="flex justify-between text-[10px] mb-2 font-black tracking-[0.2em] text-zinc-500 uppercase">
-                  <span>{r.type}</span>
-                  <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.impact}%</span>
-                </div>
-                <div className="h-[1px] w-full bg-white/[0.05] overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-1000 ease-out ${r.status === 'CRITICAL' ? 'bg-rose-500' : 'bg-blue-400'}`} 
-                    style={{ width: `${r.impact}%` }}
-                  />
-                </div>
-                <p className="text-sm text-zinc-400 mt-4 font-light group-hover:text-white transition-colors tracking-tight">{r.title}</p>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      </div>
+const DashboardView = ({ risks }) => (
+  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <BentoStat label="Revenue Exposure" value="₹2.4M" trend={14.2} subtext="Direct threat to margin" />
+      <BentoStat label="Risk Index" value="74" trend={2.1} subtext="Global aggregate score" />
+      <BentoStat label="Active Signals" value={risks.length} trend={-4} subtext="Unprocessed data points" />
+      <BentoStat label="Recovery ETA" value="14d" trend={0} subtext="Mitigation window" />
     </div>
-  );
-};
 
-const RiskExplorer = ({ risks }) => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <GlassCard className="lg:col-span-2">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h4 className="text-white font-medium tracking-tight">Risk Propagation Velocity</h4>
+            <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest font-black">Time-series intelligence</p>
+          </div>
+          <Activity size={18} className="text-blue-400" />
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={risks.length > 0 ? risks[0].trend.map((val, i) => ({ name: `T-${i}`, value: val })) : []}>
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+              <XAxis dataKey="name" hide />
+              <YAxis hide domain={[0, 100]} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff10', borderRadius: '12px' }}
+                itemStyle={{ color: '#fff', fontSize: '12px' }}
+              />
+              <Area type="monotone" dataKey="value" stroke="#60a5fa" strokeWidth={1.5} fill="url(#grad)" animationDuration={2000} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </GlassCard>
+
+      <GlassCard>
+        <h4 className="text-white font-medium mb-8">Threat Distribution</h4>
+        <div className="space-y-7">
+          {risks.map(r => (
+            <div key={r.id} className="group cursor-pointer">
+              <div className="flex justify-between text-[10px] mb-2 font-black tracking-[0.2em] text-zinc-500 uppercase">
+                <span>{r.type}</span>
+                <span className={r.status === 'CRITICAL' ? 'text-rose-500' : 'text-amber-500'}>{r.impact}%</span>
+              </div>
+              <div className="h-[1px] w-full bg-white/[0.05] overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-1000 ease-out ${r.status === 'CRITICAL' ? 'bg-rose-500' : 'bg-blue-400'}`} 
+                  style={{ width: `${r.impact}%` }}
+                />
+              </div>
+              <p className="text-sm text-zinc-400 mt-4 font-light group-hover:text-white transition-colors tracking-tight">{r.title}</p>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+    </div>
+  </div>
+);
+
+const RiskExplorerView = ({ risks }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
     {risks.map((risk) => (
       <GlassCard key={risk.id} className="flex flex-col hover:-translate-y-1">
@@ -166,21 +159,15 @@ const RiskExplorer = ({ risks }) => (
           </div>
           <div className="text-right">
             <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Velocity</p>
-            <p className="text-[11px] text-white uppercase tracking-wider">{risk.velocity} Mach</p>
+            <p className="text-[11px] text-white uppercase tracking-wider">{risk.velocity ? `${risk.velocity} Mach` : 'N/A'}</p>
           </div>
         </div>
       </GlassCard>
     ))}
-    <div className="border border-dashed border-white/[0.08] rounded-[20px] flex flex-col items-center justify-center p-8 group cursor-pointer hover:border-white/20 transition-all">
-      <div className="w-10 h-10 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 group-hover:bg-white/[0.08] transition-all">
-        <Plus className="text-zinc-500 group-hover:text-white" size={20} />
-      </div>
-      <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Register Threat</p>
-    </div>
   </div>
 );
 
-const ImpactSimulator = ({ profile }) => {
+const SimulatorView = ({ risks }) => {
   const [val, setVal] = useState(65);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-in zoom-in-95 duration-1000">
@@ -189,7 +176,6 @@ const ImpactSimulator = ({ profile }) => {
           <h4 className="text-2xl font-extralight text-white tracking-tighter italic">Probability Warp</h4>
           <p className="text-xs text-zinc-500 tracking-tight">Simulating margin erosion against global volatility.</p>
         </div>
-        
         <div className="flex-1 flex flex-col justify-center px-12 pt-12">
            <div className="relative mb-24">
               <input 
@@ -202,7 +188,6 @@ const ImpactSimulator = ({ profile }) => {
                 {val}%
               </div>
            </div>
-           
            <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-4xl font-extralight text-white mb-2 tracking-tighter">₹{(1.5 * (val/100)).toFixed(1)}M</p>
@@ -219,99 +204,86 @@ const ImpactSimulator = ({ profile }) => {
            </div>
         </div>
       </GlassCard>
-
-      <div className="lg:col-span-2">
-        <GlassCard className="h-full">
-           <h4 className="text-white font-medium mb-10 tracking-tight">AI Predictions</h4>
-           <div className="space-y-10">
-              {[
-                { label: 'Supply Chain Shock', desc: 'Cascading failure in micro-logistics nodes.', prob: 'HIGH' },
-                { label: 'Regulatory Drift', desc: 'Non-compliance window closing in 42 days.', prob: 'CRITICAL' },
-                { label: 'Sentiment Flip', desc: 'Negative PR acceleration detected.', prob: 'LOW' },
-              ].map((item, i) => (
-                <div key={i} className="relative pl-6 border-l border-white/[0.05]">
-                  <div className="absolute -left-1 top-0 w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.4)]" />
-                  <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-2">{item.prob} PROBABILITY</p>
-                  <p className="text-lg font-light text-white mb-1 tracking-tight">{item.label}</p>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">{item.desc}</p>
-                </div>
-              ))}
-           </div>
-        </GlassCard>
-      </div>
+      <GlassCard className="lg:col-span-2">
+         <h4 className="text-white font-medium mb-10 tracking-tight">AI Signal Intelligence</h4>
+         <div className="space-y-10">
+            {[
+              { label: 'Supply Chain Shock', desc: 'Cascading failure in micro-logistics nodes.', prob: 'HIGH' },
+              { label: 'Regulatory Drift', desc: 'Non-compliance window closing in 42 days.', prob: 'CRITICAL' },
+            ].map((item, i) => (
+              <div key={i} className="relative pl-6 border-l border-white/[0.05]">
+                <div className="absolute -left-1 top-0 w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.4)]" />
+                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-2">{item.prob} PROBABILITY</p>
+                <p className="text-lg font-light text-white mb-1 tracking-tight">{item.label}</p>
+                <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">{item.desc}</p>
+              </div>
+            ))}
+         </div>
+      </GlassCard>
     </div>
   );
 };
 
-const ConsultantMode = () => (
-  <div className="animate-in fade-in duration-1000 flex flex-col items-center">
-    <div className="w-full max-w-[800px] bg-white text-black p-20 min-h-[1000px] shadow-[0_0_100px_rgba(255,255,255,0.03)] selection:bg-black selection:text-white">
-      <div className="flex justify-between items-start border-b-[4px] border-black pb-12 mb-12">
-        <h1 className="text-6xl font-black tracking-tighter leading-none italic uppercase">CRISIS<br/>BOARD</h1>
-        <div className="text-right">
-          <p className="font-bold text-[10px] tracking-[0.3em] uppercase">Intelligence Protocol</p>
-          <p className="text-xs font-medium mt-1">Ref: CB-ALPHA-9</p>
-          <p className="text-xs font-medium">STATUS: LEVEL 5 CLEARANCE</p>
-        </div>
-      </div>
-      
-      <div className="space-y-12">
-        <div>
-          <h2 className="text-[10px] font-black bg-black text-white px-2 py-1 inline-block mb-8 uppercase tracking-[0.2em]">Executive Narrative</h2>
-          <p className="text-3xl font-extralight leading-tight tracking-tight">
-            Current data streams indicate a <span className="font-bold underline decoration-4 underline-offset-4">structural divergence</span> in market sensitivity. Immediate liquidity positioning is required to offset <span className="font-bold underline decoration-4 underline-offset-4">Tier-1 logistics volatility</span>.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-16 pt-16 border-t border-black/10">
-          <div>
-            <h3 className="text-[10px] font-black uppercase mb-6 tracking-[0.3em] text-zinc-400">Exposure Matrix</h3>
-            <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-black/5 pb-3">
-                <span className="text-sm font-bold">Audit Exposure</span>
-                <span className="text-xl font-light">88%</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-black/5 pb-3">
-                <span className="text-sm font-bold">Route Latency</span>
-                <span className="text-xl font-light">62%</span>
-              </div>
-            </div>
-          </div>
-          <div className="bg-zinc-50 p-8 rounded-sm">
-             <h3 className="text-[10px] font-black uppercase mb-3 tracking-[0.3em] text-zinc-400">Strategic Pivot</h3>
-             <p className="text-sm leading-relaxed italic text-zinc-800">
-               "Deploying capital toward sovereign cloud infrastructure is no longer an option but a survival imperative for current EU operations."
-             </p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div className="mt-16 flex space-x-6">
-      <button className="px-10 py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-zinc-200 transition-all">Export Protocol</button>
-      <button className="px-10 py-4 border border-white/[0.1] text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-white/[0.05] transition-all">Secure Share</button>
-    </div>
-  </div>
-);
-
-// --- App Shell ---
+// --- Main App Shell ---
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [risks] = useState(INITIAL_RISKS);
-  const [profile] = useState(COMPANY_PROFILE);
+  const [risks, setRisks] = useState(INITIAL_RISKS);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard': return <Dashboard risks={risks} />;
-      case 'explorer': return <RiskExplorer risks={risks} />;
-      case 'simulator': return <ImpactSimulator profile={profile} />;
-      case 'consultant': return <ConsultantMode />;
-      default: return <Dashboard risks={risks} />;
-    }
-  };
+  // Optional: Integration for external API
+  useEffect(() => {
+    // We try to fetch from the API, but keep INITIAL_RISKS as a robust fallback
+    fetch("http://localhost:4000/api/risks")
+      .then(res => res.json())
+      .then(data => {
+        // Map external data schema (score/level) to internal dashboard schema (impact/status)
+        const mappedData = data.map(r => ({
+          ...r,
+          impact: r.score || r.impact,
+          status: r.level || r.status,
+          trend: r.trend || [30, 40, 50, 60]
+        }));
+        setRisks(mappedData);
+      })
+      .catch(() => {
+        // Fail silently and keep INITIAL_RISKS to prevent UI break
+      });
+  }, []);
 
   return (
-    <div className={`${THEME.bg} min-h-screen text-zinc-100 selection:bg-blue-500/40 pb-24 lg:pb-0 overflow-x-hidden`}>
+    <div className="bg-[#000000] min-h-screen text-zinc-100 selection:bg-blue-500/40 pb-24 overflow-x-hidden">
+      {/* Global Style Injections */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700;900&display=swap');
+        
+        body { 
+          font-family: 'Inter', sans-serif; 
+          background-color: #000;
+          margin: 0;
+          -webkit-font-smoothing: antialiased;
+        }
+        
+        input[type='range']::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 12px; width: 12px;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+          cursor: pointer;
+        }
+
+        .animate-in { animation: animateIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes animateIn {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #111; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #222; }
+      `}</style>
+
       {/* HUD Navigation */}
       <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] w-fit">
         <div className="bg-black/90 backdrop-blur-3xl border border-white/[0.08] rounded-full px-6 py-2.5 flex items-center space-x-10 shadow-2xl shadow-black/50">
@@ -321,7 +293,6 @@ export default function App() {
             </div>
             <span className="text-xs font-black tracking-tighter uppercase italic text-white">CB</span>
           </div>
-          
           {[
             { id: 'dashboard', icon: LayoutDashboard, label: 'Vision' },
             { id: 'explorer', icon: Globe, label: 'Threats' },
@@ -348,19 +319,19 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <main className="max-w-[1400px] mx-auto pt-36 px-10">
         <div className="flex justify-between items-start mb-20">
           <div>
-             <h1 className="text-[140px] font-thin tracking-tighter leading-[0.7] text-white select-none">
+             <h1 className="text-[clamp(60px,10vw,140px)] font-thin tracking-tighter leading-[0.7] text-white select-none">
                 Crisis<span className="text-zinc-400 font-extralight opacity-40">Board</span>
              </h1>
-             <div className="mt-8 flex items-center space-x-6">
-               <p className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.5em] flex items-center">
+             <div className="mt-8 flex flex-wrap gap-6 items-center">
+               <p className="text-zinc-500 font-mono text-[9px] uppercase tracking-[0.5em] flex items-center whitespace-nowrap">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-3 shadow-[0_0_10px_rgba(96,165,250,0.6)]"></span>
                   Active Node: Alpha-7
                </p>
-               <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-[0.5em]">
+               <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-[0.5em] whitespace-nowrap">
                   Lat: 28.6139° N / Long: 77.2090° E
                </p>
              </div>
@@ -371,71 +342,43 @@ export default function App() {
           </div>
         </div>
 
-        {renderContent()}
+        {activeTab === 'dashboard' && <DashboardView risks={risks} />}
+        {activeTab === 'explorer' && <RiskExplorerView risks={risks} />}
+        {activeTab === 'simulator' && <SimulatorView risks={risks} />}
+        {activeTab === 'consultant' && (
+          <div className="flex flex-col items-center">
+            <div className="w-full max-w-[800px] bg-white text-black p-12 md:p-20 shadow-2xl animate-in">
+              <div className="flex justify-between items-start border-b-[4px] border-black pb-8 mb-12">
+                <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-none">CRISIS<br/>BOARD</h1>
+                <div className="text-right">
+                  <p className="text-[10px] font-black tracking-[0.3em] uppercase">Intelligence Brief</p>
+                  <p className="text-xs font-medium">Ref: CB-ALPHA-9</p>
+                </div>
+              </div>
+              <p className="text-3xl font-extralight tracking-tight leading-snug mb-8">
+                Structural risk detected in <span className="font-bold underline">EU regulatory corridors</span>. Strategic capital realignment advised to preserve 24% of quarterly margins.
+              </p>
+              <div className="grid grid-cols-2 gap-12 pt-12 border-t border-black/10">
+                <div>
+                  <h3 className="text-[10px] font-black uppercase mb-4 tracking-[0.3em]">Exposure Matrix</h3>
+                  <div className="space-y-4 text-sm font-bold">
+                    <div className="flex justify-between border-b pb-2"><span>Audit Exposure</span><span>88%</span></div>
+                    <div className="flex justify-between border-b pb-2"><span>Route Latency</span><span>62%</span></div>
+                  </div>
+                </div>
+                <div className="bg-zinc-50 p-6 italic text-sm text-zinc-600">
+                  "Tier-1 logistics volatility is currently outpacing internal mitigation speeds. Immediate hedging suggested."
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Grain/Noise Overlay for depth */}
+      {/* Cinematic Grain Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.035] contrast-150 grayscale mix-blend-overlay z-[200]" 
            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
       </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #000; }
-        
-        input[type='range']::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          height: 12px;
-          width: 12px;
-          border-radius: 50%;
-          background: #fff;
-          cursor: pointer;
-          box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-        }
-
-        .animate-in { animation: animateIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes animateIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #111; border-radius: 10px; }
-      `}} />
-    </div>
-  );
-}
-import { useEffect, useState } from "react";
-
-export default function App() {
-  const [risks, setRisks] = useState([]);
-
-  useEffect(() => {
-    fetch("http://localhost:4000/api/risks")
-      .then(res => res.json())
-      .then(data => setRisks(data))
-      .catch(err => console.error(err));
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-4">CrisisBoard</h1>
-
-      {risks.map(r => (
-        <div
-          key={r.id}
-          className="mb-3 p-3 rounded border border-zinc-800"
-        >
-          <div className="font-semibold">{r.title}</div>
-          <div className="text-sm text-zinc-400">
-            {r.industry} • {r.type}
-          </div>
-          <div className="mt-1">
-            Score: <span className="font-bold">{r.score}</span> ({r.level})
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
